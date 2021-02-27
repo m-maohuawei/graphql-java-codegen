@@ -1,0 +1,16 @@
+/**
+ * Resolver for Event
+ */
+@javax.annotation.Generated(
+    value = "com.kobylynskyi.graphql.codegen.GraphQLCodegen",
+    date = "2020-12-31T23:59:59-0500"
+)
+public interface EventResolver {
+
+    /**
+     * Optional list of assets
+     */
+    @javax.validation.constraints.NotNull
+    java.util.List<Asset> assets(Event event) throws Exception;
+
+}

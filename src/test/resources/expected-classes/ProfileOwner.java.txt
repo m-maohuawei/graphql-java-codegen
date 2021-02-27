@@ -1,30 +1,38 @@
 package com.github.graphql;
 
-import java.util.*;
 
+@javax.annotation.Generated(
+    value = "com.kobylynskyi.graphql.codegen.GraphQLCodegen",
+    date = "2020-12-31T23:59:59-0500"
+)
 public interface ProfileOwner {
 
-    Boolean getAnyPinnableItems();
+    boolean getAnyPinnableItems();
 
     String getEmail();
 
+    @javax.validation.constraints.NotNull
     String getId();
 
+    @javax.validation.constraints.NotNull
     ProfileItemShowcase getItemShowcase();
 
     String getLocation();
 
+    @javax.validation.constraints.NotNull
     String getLogin();
 
     String getName();
 
+    @javax.validation.constraints.NotNull
     PinnableItemConnection getPinnableItems();
 
+    @javax.validation.constraints.NotNull
     PinnableItemConnection getPinnedItems();
 
-    Integer getPinnedItemsRemaining();
+    int getPinnedItemsRemaining();
 
-    Boolean getViewerCanChangePinnedItems();
+    boolean getViewerCanChangePinnedItems();
 
     String getWebsiteUrl();
 

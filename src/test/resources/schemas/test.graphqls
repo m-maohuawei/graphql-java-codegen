@@ -11,19 +11,30 @@ schema {
 }
 
 type Query {
-    # Version of the application.
+    "       Version of the application.    "
     version: String!
 
-    # List of events of a specified category.
+    """
+    List of events of a specified category.
+    """
     eventsByCategoryAndStatus(categoryId: ID!, status: EventStatus): [Event]!
 
     # Single event by ID.
     eventById(id: ID!): Event!
+
+    # Events by IDs.
+    eventsByIds(ids: [ID!]!): [Event!]!
 }
 
 type Mutation {
     # Create a new event.
-    createEvent(categoryId: String!, createdBy: String!): Event! @auth(role:"admin")
+    createEvent(categoryId: String!, createdBy: String!): Event!
+    @auth(
+        roles: ["admin", "moderator"],
+        boo: [true, false, true],
+        float: [12.0, null],
+        int: 42,
+        n: null)
 }
 
 type Subscription {
@@ -36,7 +47,7 @@ type Subscription {
 type Event {
     id: ID
     categoryId: String
-    properties: [EventProperty]
+    properties: [EventProperty] @customResolver
     status: EventStatus
     createdBy: String
     createdDateTime: DateTime
@@ -45,13 +56,28 @@ type Event {
 }
 
 # An event property have all possible types
-type EventProperty {
-    floatVal: Float
+type EventProperty @customResolver{
+    # Float property
+    # with multiline comment
+    floatVal: Float @noResolver
+
     booleanVal: Boolean
-    intVal: Int
+
+    #
+    #
+    intVal: Int!
+
+    """
+    primitive should not be generated
+    """
+    intVals: [Int!]
+
+    # String comment
     stringVal: String
-    child: [EventProperty]
-    parent: Event
+    # Properties
+    child(first: Int, last: Int): [EventProperty]
+    # Parent event of the property
+    parent(withStatus: EventStatus): Event
 }
 
 # Custom DateTime scalar
@@ -61,7 +87,21 @@ scalar DateTime
 
 # Possible statuses of the event
 enum EventStatus {
+    # OPEN status
+    # Means just created
     OPEN
     IN_PROGRESS
+    # Logging completed
     LOGGED
 }
+
+directive @auth (
+    roles: [String] = ["viewer"],
+    float: [Float] = [],
+    n: ID,
+    int: Int!,
+    boo: [Boolean]
+) on FIELD_DEFINITION | QUERY | MUTATION | SUBSCRIPTION
+
+directive @customResolver on FIELD_DEFINITION | OBJECT
+directive @noResolver on FIELD_DEFINITION | OBJECT

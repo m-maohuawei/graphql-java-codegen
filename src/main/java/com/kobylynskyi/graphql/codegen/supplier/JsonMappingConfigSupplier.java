@@ -1,11 +1,10 @@
 package com.kobylynskyi.graphql.codegen.supplier;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-
-import com.google.gson.GsonBuilder;
 import com.kobylynskyi.graphql.codegen.model.MappingConfig;
+import com.kobylynskyi.graphql.codegen.utils.Utils;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Retrieve a MappingConfig fro json configuration file.
@@ -14,7 +13,7 @@ import com.kobylynskyi.graphql.codegen.model.MappingConfig;
  */
 public class JsonMappingConfigSupplier implements MappingConfigSupplier {
 
-    private String jsonConfigFile;
+    private final String jsonConfigFile;
 
     /**
      * Instantiates a new Json configuration file supplier.
@@ -29,8 +28,8 @@ public class JsonMappingConfigSupplier implements MappingConfigSupplier {
     public MappingConfig get() {
         if (jsonConfigFile != null && !jsonConfigFile.isEmpty()) {
             try {
-                return new GsonBuilder().create().fromJson(new FileReader(new File(jsonConfigFile)), MappingConfig.class);
-            } catch (FileNotFoundException e) {
+                return Utils.OBJECT_MAPPER.readValue(new File(jsonConfigFile), MappingConfig.class);
+            } catch (IOException e) {
                 throw new IllegalArgumentException(e);
             }
         }

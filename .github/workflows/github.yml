@@ -1,0 +1,120 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk-version: [1.8]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java ${{ matrix.jdk-version }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.jdk-version }}
+
+      - name: Gradle cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle
+          key: gradle
+
+      - name: Maven cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2
+          key: m2
+
+      - name: Loading ivy cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy-${{ hashFiles('**/*.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy-
+
+      - name: Build library
+        run: ./gradlew build publishToMavenLocal publishAllPublicationsToIvyRepository --warning-mode all
+
+      - name: Build gradle plugin
+        run: ./gradlew -p plugins/gradle/graphql-java-codegen-gradle-plugin build publishToMavenLocal --warning-mode all
+
+      - name: Build maven plugin
+        working-directory: plugins/maven/graphql-java-codegen-maven-plugin
+        run: mvn install
+
+      - name: Build sbt plugin
+        working-directory: plugins/sbt/graphql-java-codegen-sbt-plugin
+        run: sbt compile publishLocal --debug
+
+      - name: Build sbt test
+        working-directory: plugins/sbt/graphql-java-codegen-sbt-plugin
+        run: sbt scripted
+
+      - name: Build gradle example-server --warning-mode all
+        run: ./gradlew -p plugins/gradle/example-server test --warning-mode all
+
+      - name: Build gradle example-client
+        run: ./gradlew -p plugins/gradle/example-client test --warning-mode all
+
+      - name: Build gradle example-client-kotlin
+        run: ./gradlew -p plugins/gradle/example-client-kotlin build --warning-mode all
+
+      - name: Build maven example-server
+        working-directory: plugins/maven/example-server
+        run: mvn package
+
+      - name: Build maven example-client
+        working-directory: plugins/maven/example-client
+        run: mvn package
+
+
+  sonar:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Gradle cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle
+          key: gradle
+
+      - name: Maven cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2
+          key: m2
+
+      - name: Loading ivy cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy-${{ hashFiles('**/*.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy-
+
+      - name: Generate code coverage report
+        run: ./gradlew codeCoverageReport --stacktrace
+
+      - name: Generate and publish Sonar report
+        run: ./gradlew sonarqube -Dsonar.projectKey=kobylynskyi_graphql-java-codegen -Dsonar.organization=kobylynskyi -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_LOGIN }} --stacktrace
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

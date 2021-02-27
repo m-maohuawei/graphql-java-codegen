@@ -1,19 +1,16 @@
 # GraphQL Codegen Maven plugin #
 
-[![CircleCI](https://img.shields.io/circleci/build/github/kobylynskyi/graphql-java-codegen)](https://circleci.com/gh/kobylynskyi/graphql-java-codegen/tree/master)
+![Build](https://github.com/kobylynskyi/graphql-java-codegen/workflows/Build/badge.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.kobylynskyi/graphql-codegen-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.kobylynskyi/graphql-codegen-maven-plugin)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This document describes the maven plugin for graphql-java-codegen.
+* [Plugin Setup and Configuration](#plugin-setup-and-configuration)
+* [Plugin Options](#plugin-options)
+* [Examples](#examples)
+  * [GraphQL **server** code generation](#graphql-server-code-generation)
+  * [GraphQL **client** code generation](#graphql-client-code-generation)
+* [Different configurations for graphql schemas](#different-configurations-for-graphql-schemas)
 
-### Description
-
-This Maven plugin is able to generate the following classes based on your GraphQL schema:
-* Interfaces for GraphQL queries, mutations and subscriptions
-* Interfaces for GraphQL unions
-* POJO classes for GraphQL types
-* Enum classes for each GraphQL enum
-* Interface Resolvers for GraphQL type fields 
 
 ### Plugin Setup and Configuration
 
@@ -24,14 +21,19 @@ This Maven plugin is able to generate the following classes based on your GraphQ
         <plugin>
             <groupId>io.github.kobylynskyi</groupId>
             <artifactId>graphql-codegen-maven-plugin</artifactId>
-            <version>1.5.0</version>
+            <version>4.1.3</version>
             <executions>
                 <execution>
                     <goals>
                         <goal>generate</goal>
                     </goals>
                     <configuration>
-                        <graphqlSchemaPaths>${project.basedir}/src/main/resources/schema.graphqls</graphqlSchemaPaths>
+                        <!-- all config options: 
+                        https://github.com/kobylynskyi/graphql-java-codegen/blob/master/docs/codegen-options.md
+                        -->
+                        <graphqlSchemas>
+                            <includePattern>schema\.graphqls</includePattern>
+                        </graphqlSchemas>
                         <outputDir>${project.build.directory}/generated-sources/graphql</outputDir>
                         <packageName>io.github.kobylynskyi.bikeshop.graphql.model</packageName>
                         <customTypesMapping>
@@ -39,7 +41,9 @@ This Maven plugin is able to generate the following classes based on your GraphQ
                             <Price.amount>java.math.BigDecimal</Price.amount>
                         </customTypesMapping>
                         <customAnnotationsMapping>
-                            <EpochMillis>com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.example.json.EpochMillisScalarDeserializer.class</EpochMillis>
+                            <EpochMillis>
+                                <annotation>com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.example.json.EpochMillisScalarDeserializer.class)</annotation>
+                            </EpochMillis>
                         </customAnnotationsMapping>
                         <modelNameSuffix>TO</modelNameSuffix>
                     </configuration>
@@ -51,57 +55,31 @@ This Maven plugin is able to generate the following classes based on your GraphQ
 </build>
 ```
 
+You can run the plugin manually with `mvn generate-sources`. It will be run automatically as part of the Maven lifecycle when compiling your code
 
-#### Plugin Options
 
-| Key                                  | Data Type          | Default value                             | Description |
-| ------------------------------------ | ------------------ | ----------------------------------------- | ----------- |
-| graphqlSchemaPaths                   | List(String)       | (falls back to `graphqlSchemas`)          | GraphQL schema locations. You can supply multiple paths to GraphQL schemas. To include many schemas from a folder hierarchy, use the `graphqlSchemas` block instead. |
-| graphqlSchemas                       | (see table below)  | All `.graphqls` files in resources        | Block to define the input GraphQL schemas, when exact paths are too cumbersome. See table below for a list of options. |
-| packageName                          | String             | Empty                                     | Java package for generated classes. |
-| outputDir                            | String             | None                                      | The output target directory into which code will be generated. |
-| apiPackage                           | String             | Empty                                     | Java package for generated api classes (Query, Mutation, Subscription). |
-| modelPackage                         | String             | Empty                                     | Java package for generated model classes (type, input, interface, enum, union). |
-| generateApis                         | Boolean            | True                                      | Specifies whether api classes should be generated as well as model classes. |
-| customTypesMapping                   | Map(String,String) | Empty                                     | Can be used to supply custom mappings for scalars. <br/> Supports:<br/> * Map of (GraphqlObjectName.fieldName) to (JavaType) <br/> * Map of (GraphqlType) to (JavaType) |
-| customAnnotationsMapping             | Map(String,String) | Empty                                     | Can be used to supply custom annotations (serializers) for scalars. <br/> Supports:<br/> * Map of (GraphqlObjectName.fieldName) to (JavaType) <br/> * Map of (GraphqlType) to (JavaType) |
-| modelValidationAnnotation            | String             | @javax.validation.<br>constraints.NotNull | Annotation for mandatory (NonNull) fields. Can be null/empty. |
-| modelNamePrefix                      | String             | Empty                                     | Sets the prefix for GraphQL model classes (type, input, interface, enum, union). |
-| modelNameSuffix                      | String             | Empty                                     | Sets the suffix for GraphQL model classes (type, input, interface, enum, union). |
-| subscriptionReturnType               | String             | Empty                                     | Return type for subscription methods. For example: `org.reactivestreams.Publisher`, `io.reactivex.Observable`, etc. |
-| generateEqualsAndHashCode            | Boolean            | False                                     | Specifies whether generated model classes should have equals and hashCode methods defined. |
-| generateToString                     | Boolean            | False                                     | Specifies whether generated model classes should have toString method defined. |
-| generateAsyncApi                     | Boolean            | False                                     | If true, then wrap type into `java.util.concurrent.CompletableFuture` or `subscriptionReturnType` |
-| generateParameterizedFieldsResolvers | Boolean            | True                                      | If true, then generate separate `Resolver` interface for parametrized fields. If false, then add field to the type definition and ignore field parameters. |
-| fieldsWithResolvers                  | Set(String)        | Empty                                     | Fields that require Resolvers should be defined here in format: `TypeName.fieldName`. |
-| jsonConfigurationFile                | String             | Empty                                     | Path to an external mapping configuration. |
+### Plugin Options
 
-When exact paths to GraphQL schemas are too cumbersome to provide in the `graphqlSchemaPaths`, use the `graphqlSchemas` block.
-The parameters inside that block are the following:
+Please refer to [Codegen Options](../../docs/codegen-options.md)
 
-| Key               | Data Type    | Default value      | Description |
-| ----------------- | ------------ | ------------------ | ----------- |
-| `rootDir`         | String       | Main resources dir | The root directory from which to start searching for schema files. |
-| `recursive`       | Boolean      | `true`             | Whether to recursively look into sub directories. |
-| `includePattern`  | String       | `.*\.graphqls`     | A Java regex that file names must match to be included. It should be a regex as defined by the [Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) JDK class. It will be used to match only the file name without path. |
-| `excludedFiles`   | Set<String>  | (empty set)        | A set of files to exclude, even if they match the include pattern. These paths should be either absolute or relative to the provided `rootDir`. |
+### Examples
 
-#### External mapping configuration
+#### GraphQL **server** code generation
 
-Provide a path to external file via property `jsonConfigurationFile`
-Sample content of the file:
+[example-server](example-server):
+  * [Plugin configuration in pom.xml](example-server/pom.xml)
+  * [GraphQL Resolver classes that implement generated interfaces](example-server/src/main/java/io/github/kobylynskyi/product/graphql/resolvers)
 
-```json
-{
-  "generateApis": true,
-  "packageName": "com.kobylynskyi.graphql.testconfigjson",
-  "customTypesMapping": {
-    "Price.amount": "java.math.BigDecimal"
-  }
-}
-```
+#### GraphQL **client** code generation
 
-### Different configuration for each graphql schema
+[example-client](example-client):
+  * [Plugin configuration in pom.xml](example-client/pom.xml)
+  * [Building GraphQL request and parsing response using Spring RestTemplate](example-client/src/main/java/io/github/kobylynskyi/order/external/product/ProductServiceGraphQLClient.java)
+  * [Building GraphQL request and parsing response using RestAssured](example-client/src/test/java/io/github/kobylynskyi/order/service/CreateProductIntegrationTest.java)
+
+
+### Different configurations for graphql schemas
+
 If you want to have different configuration for different `.graphqls` files (e.g.: different javaPackage, outputDir, etc.), then you will need to define separate executions for each set of schemas. E.g.:
 
 ```xml
@@ -128,10 +106,6 @@ If you want to have different configuration for different `.graphqls` files (e.g
     </execution>
 </executions>
 ```
-
-### Example
-
-[example](example)
 
 
 ### Inspired by

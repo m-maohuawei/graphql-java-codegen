@@ -1,0 +1,104 @@
+import io.github.kobylynskyi.graphql.codegen.gradle.GraphQLCodegenGradleTask
+
+plugins {
+    id "java"
+    id "idea"
+    id "application"
+
+    // use the latest available version:
+    // https://plugins.gradle.org/plugin/io.github.kobylynskyi.graphql.codegen
+    id "io.github.kobylynskyi.graphql.codegen" version "4.1.4-SNAPSHOT"
+}
+
+mainClassName = "io.github.kobylynskyi.order.Application"
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter-web:2.4.3"
+    implementation "org.springframework.boot:spring-boot-starter-data-mongodb:2.4.3"
+
+    implementation "com.graphql-java-kickstart:graphql-spring-boot-starter:8.0.0"
+    implementation "com.graphql-java-kickstart:graphiql-spring-boot-starter:8.0.0"
+    implementation "com.graphql-java:graphql-java-extended-scalars:15.0.0"
+
+    // use the latest available version:
+    // https://search.maven.org/artifact/io.github.kobylynskyi/graphql-java-codegen
+    implementation "io.github.kobylynskyi:graphql-java-codegen:4.1.4-SNAPSHOT"
+
+    implementation "org.apache.httpcomponents:httpclient:4.5.13"
+    implementation "javax.validation:validation-api:2.0.1.Final"
+
+    implementation "org.mapstruct:mapstruct:1.4.2.Final"
+    annotationProcessor "org.mapstruct:mapstruct-processor:1.4.2.Final"
+
+    compileOnly "org.projectlombok:lombok:1.18.18"
+    annotationProcessor "org.projectlombok:lombok:1.18.12"
+
+    testImplementation "io.rest-assured:rest-assured:4.3.3"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.1"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.1"
+}
+
+
+/**
+ * Generate requests and model from external service
+ */
+compileJava.dependsOn "graphqlCodegenProductService"
+sourceSets.main.java.srcDir "$buildDir/generated-client"
+task graphqlCodegenProductService(type: GraphQLCodegenGradleTask) {
+    graphqlSchemas.includePattern = "schema-product-service\\.graphqls"
+    outputDir = new File("$buildDir/generated-client")
+    modelPackageName = "io.github.kobylynskyi.product.graphql.model"
+    customTypesMapping = [
+            DateTime: "java.util.Date"
+    ]
+    modelNameSuffix = "TO"
+    generateApis = false
+    generateClient = true
+    generateParameterizedFieldsResolvers = false
+}
+
+
+/**
+ * Generate apis and model
+ */
+compileJava.dependsOn "graphqlCodegenOrderService"
+sourceSets.main.java.srcDir "$buildDir/generated-server"
+task graphqlCodegenOrderService(type: GraphQLCodegenGradleTask) {
+    graphqlSchemas.includePattern = "schema\\.graphqls"
+    outputDir = new File("$buildDir/generated-server")
+    apiPackageName = "io.github.kobylynskyi.order.graphql.api"
+    modelPackageName = "io.github.kobylynskyi.order.graphql.model"
+    customTypesMapping = [
+            DateTime: "java.util.Date"
+    ]
+    modelNameSuffix = "TO"
+}
+
+/**
+ * Generate requests and model from another external service
+ */
+compileJava.dependsOn "graphqlCodegenStarwarsService"
+sourceSets.main.java.srcDir "$buildDir/generated-client-starwars"
+task graphqlCodegenStarwarsService(type: GraphQLCodegenGradleTask) {
+    graphqlSchemas.includePattern = "schema-starwars-service\\.graphqls"
+    outputDir = new File("$buildDir/generated-client-starwars")
+    packageName = "io.github.kobylynskyi.starwars.graphql"
+    customAnnotationsMapping = [
+            "Character": [
+                    "@com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME, property = \"__typename\")",
+                    "@com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver(io.github.kobylynskyi.order.external.starwars.CharacterTypeResolver.class)"
+            ]
+    ]
+    generateClient = true
+    generateApis = false
+    generateBuilder = true
+    generateToString = true
+    generateParameterizedFieldsResolvers = false
+}
+
+
+repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+}

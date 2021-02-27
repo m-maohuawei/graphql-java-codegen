@@ -1,25 +1,24 @@
 # GraphQL Codegen Gradle plugin #
 
-[![CircleCI](https://img.shields.io/circleci/build/github/kobylynskyi/graphql-java-codegen)](https://circleci.com/gh/kobylynskyi/graphql-java-codegen/tree/master)
-[![Gradle Plugins](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/github/kobylynskyi/graphql/codegen/graphql-codegen-gradle-plugin/maven-metadata.xml.svg?label=gradle)](https://plugins.gradle.org/plugin/io.github.kobylynskyi.graphql.codegen)
+![Build](https://github.com/kobylynskyi/graphql-java-codegen/workflows/Build/badge.svg)
+[![Gradle Plugins](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/github/kobylynskyi/graphql-java-codegen-gradle-plugin/maven-metadata.xml.svg?label=gradle)](https://plugins.gradle.org/plugin/io.github.kobylynskyi.graphql.codegen)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This document describes the gradle plugin for graphql-java-codegen.
+* [Plugin Setup](#plugin-setup)
+* [Plugin Options](#plugin-options)
+* [Sample Plugin Configuration](#sample-plugin-configuration)
+* [Examples](#examples)
+  * [GraphQL **server** code generation](#graphql-server-code-generation)
+  * [GraphQL **client** code generation](#graphql-client-code-generation)
+* [Different configurations for graphql schemas](#different-configurations-for-graphql-schemas)
+* [Convert generated Java classes to Kotlin classes](#convert-generated-java-classes-to-kotlin-classes)
 
-### Description
-
-This Gradle plugin is able to generate the following classes based on your GraphQL schema:
-* Interfaces for GraphQL queries, mutations and subscriptions
-* Interfaces for GraphQL unions
-* POJO classes for GraphQL types
-* Enum classes for each GraphQL enum
-* Interface Resolvers for GraphQL type fields 
 
 ### Plugin Setup
 
 ```groovy
 plugins {
-  id "io.github.kobylynskyi.graphql.codegen" version "1.5.0"
+  id "io.github.kobylynskyi.graphql.codegen" version "4.1.3"
 }
 ```
 
@@ -33,30 +32,34 @@ buildscript {
     }
   }
   dependencies {
-    classpath "io.github.kobylynskyi.graphql.codegen:graphql-codegen-gradle-plugin:1.5.0"
+    classpath "io.github.kobylynskyi.graphql.codegen:graphql-codegen-gradle-plugin:4.1.3"
   }
 }
 
 apply plugin: "io.github.kobylynskyi.graphql.codegen"
 ```
 
-### Plugin Configuration
+### Plugin Options
+
+Please refer to [Codegen Options](../../docs/codegen-options.md)
+
+### Sample Plugin Configuration
 
 #### build.gradle:
 
 ```groovy
 graphqlCodegen {
-    graphqlSchemaPaths = [
-        "$projectDir/src/main/resources/schema.graphqls".toString()
-    ]
-    outputDir = "$buildDir/generated/graphql"
+    // all config options: 
+    // https://github.com/kobylynskyi/graphql-java-codegen/blob/master/docs/codegen-options.md
+    graphqlSchemas.includePattern = "schema\\.graphqls"
+    outputDir = new File("$buildDir/generated")
     packageName = "com.example.graphql.model"
     customTypesMapping = [
         DateTime: "org.joda.time.DateTime",
         Price.amount: "java.math.BigDecimal"
     ]
     customAnnotationsMapping = [
-        DateTime: "com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.example.json.EpochMillisScalarDeserializer.class"
+        DateTime: ["@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.example.json.EpochMillisScalarDeserializer.class)"]
     ]
     modelNameSuffix = "TO"
 }
@@ -68,89 +71,61 @@ compileJava.dependsOn 'graphqlCodegen'
 sourceSets.main.java.srcDir "$buildDir/generated"
 ```
 
+You can also refer to build.gradle files in example projects: [example-client/build.gradle](example-client/build.gradle), [example-server/build.gradle](example-server/build.gradle)
+
 #### build.gradle.kts:
 
-```groovy
-tasks.named<GraphqlCodegenGradleTask>("graphqlCodegen") {
-    graphqlSchemaPaths = listOf("$projectDir/src/main/resources/graphql/schema.graphqls".toString())
-    outputDir = File("$buildDir/generated/graphql")
+```kotlin
+tasks.named<GraphQLCodegenGradleTask>("graphqlCodegen") {
+    // all config options: 
+    // https://github.com/kobylynskyi/graphql-java-codegen/blob/master/docs/codegen-options.md
+    graphqlSchemaPaths = listOf("$projectDir/src/main/resources/graphql/schema.graphqls")
+    outputDir = File("$buildDir/generated")
     packageName = "com.example.graphql.model"
     customTypesMapping = mutableMapOf(Pair("EpochMillis", "java.time.LocalDateTime"))
-    customAnnotationsMapping = mutableMapOf(Pair("EpochMillis", "com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.example.json.EpochMillisScalarDeserializer.class"))
+    customAnnotationsMapping = mutableMapOf(Pair("EpochMillis", listOf("@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.example.json.EpochMillisScalarDeserializer.class)")))
 }
 
 // Automatically generate GraphQL code on project build:
 sourceSets {
-    getByName("main").java.srcDirs("$buildDir/generated/graphql")
+    getByName("main").java.srcDirs("$buildDir/generated")
 }
 
 // Add generated sources to your project source sets:
-val check: DefaultTask by tasks
-val graphqlCodegen: DefaultTask by tasks
-check.dependsOn(graphqlCodegen)    
-```
-
-#### Plugin Options
-
-| Key                                  | Data Type          | Default value                             | Description |
-| ------------------------------------ | ------------------ | ----------------------------------------- | ----------- |
-| graphqlSchemaPaths                   | List(String)       | (falls back to `graphqlSchemas`)          | GraphQL schema locations. You can supply multiple paths to GraphQL schemas. To include many schemas from a folder hierarchy, use the `graphqlSchemas` block instead. |
-| graphqlSchemas                       | (see table below)  | All `.graphqls` files in resources        | Block to define the input GraphQL schemas, when exact paths are too cumbersome. See table below for a list of options. |
-| packageName                          | String             | Empty                                     | Java package for generated classes. |
-| outputDir                            | String             | None                                      | The output target directory into which code will be generated. |
-| apiPackage                           | String             | Empty                                     | Java package for generated api classes (Query, Mutation, Subscription). |
-| modelPackage                         | String             | Empty                                     | Java package for generated model classes (type, input, interface, enum, union). |
-| generateApis                         | Boolean            | True                                      | Specifies whether api classes should be generated as well as model classes. |
-| customTypesMapping                   | Map(String,String) | Empty                                     | Can be used to supply custom mappings for scalars. <br/> Supports:<br/> * Map of (GraphqlObjectName.fieldName) to (JavaType) <br/> * Map of (GraphqlType) to (JavaType) |
-| customAnnotationsMapping             | Map(String,String) | Empty                                     | Can be used to supply custom annotations (serializers) for scalars. <br/> Supports:<br/> * Map of (GraphqlObjectName.fieldName) to (JavaType) <br/> * Map of (GraphqlType) to (JavaType) |
-| modelValidationAnnotation            | String             | @javax.validation.<br>constraints.NotNull | Annotation for mandatory (NonNull) fields. Can be null/empty. |
-| modelNamePrefix                      | String             | Empty                                     | Sets the prefix for GraphQL model classes (type, input, interface, enum, union). |
-| modelNameSuffix                      | String             | Empty                                     | Sets the suffix for GraphQL model classes (type, input, interface, enum, union). |
-| subscriptionReturnType               | String             | Empty                                     | Return type for subscription methods. For example: `org.reactivestreams.Publisher`, `io.reactivex.Observable`, etc. |
-| generateEqualsAndHashCode            | Boolean            | False                                     | Specifies whether generated model classes should have equals and hashCode methods defined. |
-| generateToString                     | Boolean            | False                                     | Specifies whether generated model classes should have toString method defined. |
-| generateAsyncApi                     | Boolean            | False                                     | If true, then wrap type into `java.util.concurrent.CompletableFuture` or `subscriptionReturnType` |
-| generateParameterizedFieldsResolvers | Boolean            | True                                      | If true, then generate separate `Resolver` interface for parametrized fields. If false, then add field to the type definition and ignore field parameters. |
-| fieldsWithResolvers                  | Set(String)        | Empty                                     | Fields that require Resolvers should be defined here in format: `TypeName.fieldName`. |
-| jsonConfigurationFile                | String             | Empty                                     | Path to an external mapping configuration. |
-
-When exact paths to GraphQL schemas are too cumbersome to provide in the `graphqlSchemaPaths`, use the `graphqlSchemas { ... }` block.
-The parameters inside that block are the following:
-
-| Key               | Data Type    | Default value      | Description |
-| ----------------- | ------------ | ------------------ | ----------- |
-| `rootDir`         | String       | Main resources dir | The root directory from which to start searching for schema files. |
-| `recursive`       | Boolean      | `true`             | Whether to recursively look into sub directories. |
-| `includePattern`  | String       | `.*\.graphqls`     | A Java regex that file names must match to be included. It should be a regex as defined by the [Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) JDK class. It will be used to match only the file name without path. |
-| `excludedFiles`   | Set<String>  | (empty set)        | A set of files to exclude, even if they match the include pattern. These paths should be either absolute or relative to the provided `rootDir`. |
-
-#### External mapping configuration
-
-Provide a path to external file via property `jsonConfigurationFile`
-Sample content of the file:
-
-```json
-{
-  "generateApis": true,
-  "packageName": "com.kobylynskyi.graphql.testconfigjson",
-  "customTypesMapping": {
-    "Price.amount": "java.math.BigDecimal"
-  }
+tasks.named<JavaCompile>("compileJava") {
+    dependsOn("graphqlCodegen")
 }
 ```
 
-### Different configuration for each graphql schema
+
+### Examples
+
+#### GraphQL **server** code generation
+
+[example-server](example-server):
+  * [Plugin configuration in build.gradle](example-server/build.gradle)
+  * [GraphQL Resolver classes that implement generated interfaces](example-server/src/main/java/io/github/kobylynskyi/product/graphql/resolvers)
+
+#### GraphQL **client** code generation 
+
+[example-client](example-client):
+  * [Plugin configuration in build.gradle](example-client/build.gradle)
+  * [Building GraphQL request and parsing response using Spring RestTemplate](example-client/src/main/java/io/github/kobylynskyi/order/external/product/ProductServiceGraphQLClient.java)
+  * [Building GraphQL request and parsing response using RestAssured](example-client/src/test/java/io/github/kobylynskyi/order/service/CreateProductIntegrationTest.java)
+
+
+### Different configurations for graphql schemas
 
 If you want to have different configuration for different `.graphqls` files (e.g.: different javaPackage, outputDir, etc.), then you will need to create separate gradle tasks for each set of schemas. E.g.:
 
 ```groovy
 task graphqlCodegenService1(type: GraphqlCodegenGradleTask) {
-    graphqlSchemaPaths = ["$projectDir/src/main/resources/schema1.graphqls".toString()]
+    graphqlSchemas.includePattern = "schema1\\.graphqls"
     outputDir = new File("$buildDir/generated/example1")
 }
 
 task graphqlCodegenService2(type: GraphqlCodegenGradleTask) {
-    graphqlSchemaPaths = ["$projectDir/src/main/resources/schema2.graphqls".toString()]
+    graphqlSchemas.includePattern = "schema2\\.graphqls"
     outputDir = new File("$buildDir/generated/example2")
 }
 ```
@@ -164,13 +139,8 @@ Later on you can call each task separately or together:
 
 ### Convert generated Java classes to Kotlin classes
 
-Navigate in IntelijIdea to the `./build/generated/graphql/` folder and press `Cmd+Alt+Shift+K`
-Access to classes from your code as normal Kotlin classes.
-
-
-### Example
-
-[example](example)
+1. Navigate in IntelliJ IDEA to the `./build/generated/graphql/` folder and press `Cmd+Alt+Shift+K`
+2. Access generated classes as normal Kotlin classes.
 
 
 ### Inspired by

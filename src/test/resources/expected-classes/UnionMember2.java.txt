@@ -1,8 +1,11 @@
 package com.kobylynskyi.graphql.multifiles;
 
-import java.util.*;
 
-public class UnionMember2 implements MyUnion{
+@javax.annotation.Generated(
+    value = "com.kobylynskyi.graphql.codegen.GraphQLCodegen",
+    date = "2020-12-31T23:59:59-0500"
+)
+public class UnionMember2 implements java.io.Serializable, MyUnion {
 
     private String someField;
 
@@ -20,4 +23,28 @@ public class UnionMember2 implements MyUnion{
         this.someField = someField;
     }
 
+
+
+    public static UnionMember2.Builder builder() {
+        return new UnionMember2.Builder();
+    }
+
+    public static class Builder {
+
+        private String someField;
+
+        public Builder() {
+        }
+
+        public Builder setSomeField(String someField) {
+            this.someField = someField;
+            return this;
+        }
+
+
+        public UnionMember2 build() {
+            return new UnionMember2(someField);
+        }
+
+    }
 }

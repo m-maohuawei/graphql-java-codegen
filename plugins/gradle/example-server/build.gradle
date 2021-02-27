@@ -1,0 +1,57 @@
+plugins {
+    id "java"
+    id "idea"
+    id "application"
+
+    //
+    // use the latest available version:
+    // https://plugins.gradle.org/plugin/io.github.kobylynskyi.graphql.codegen
+    id "io.github.kobylynskyi.graphql.codegen" version "4.1.4-SNAPSHOT"
+}
+
+mainClassName = "io.github.kobylynskyi.product.Application"
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter-web:2.4.3"
+    implementation "org.springframework.boot:spring-boot-starter-data-mongodb:2.4.3"
+
+    implementation "com.graphql-java-kickstart:graphql-spring-boot-starter:8.0.0"
+    implementation "com.graphql-java-kickstart:graphiql-spring-boot-starter:8.0.0"
+    implementation "com.graphql-java:graphql-java-extended-scalars:15.0.0"
+
+    implementation "javax.validation:validation-api:2.0.1.Final"
+
+    implementation "org.mapstruct:mapstruct:1.4.2.Final"
+    annotationProcessor "org.mapstruct:mapstruct-processor:1.4.2.Final"
+
+    compileOnly "org.projectlombok:lombok:1.18.18"
+    annotationProcessor "org.projectlombok:lombok:1.18.12"
+}
+
+compileJava.dependsOn "graphqlCodegen"
+
+sourceSets.main.java.srcDir "$buildDir/generated"
+
+graphqlCodegen {
+    graphqlSchemaPaths = ["$projectDir/src/main/resources/schema.graphqls".toString()]
+    outputDir = new File("$buildDir/generated")
+    apiPackageName = "io.github.kobylynskyi.product.graphql.api"
+    modelPackageName = "io.github.kobylynskyi.product.graphql.model"
+    customTypesMapping = [
+            DateTime: "java.util.Date"
+    ]
+    parentInterfaces {
+        queryResolver = "graphql.kickstart.tools.GraphQLQueryResolver"
+        mutationResolver = "graphql.kickstart.tools.GraphQLMutationResolver"
+        subscriptionResolver = "graphql.kickstart.tools.GraphQLSubscriptionResolver"
+        resolver = "graphql.kickstart.tools.GraphQLResolver<{{TYPE}}>"
+    }
+    modelNameSuffix = "TO"
+    generateApis = true
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+}
