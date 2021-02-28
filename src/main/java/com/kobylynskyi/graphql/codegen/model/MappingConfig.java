@@ -1,10 +1,6 @@
 package com.kobylynskyi.graphql.codegen.model;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -76,6 +72,29 @@ public class MappingConfig implements GraphQLCodegenConfiguration, Combinable<Ma
     private boolean generateModelOpenClasses;
 
     private GeneratedLanguage generatedLanguage;
+
+
+    private List<String> apiPackageImports = new ArrayList<>();
+    private List<String> modelPackageImports = new ArrayList<>();
+
+
+    public void setModelPackageImports(List<String> modelPackageImports) {
+        this.modelPackageImports.addAll(modelPackageImports);
+    }
+
+    public void setApiPackageImports(List<String> apiPackageImports) {
+        this.apiPackageImports.addAll(apiPackageImports);
+    }
+
+    @Override
+    public List<String> getApiPackageImports() {
+        return apiPackageImports;
+    }
+
+    @Override
+    public List<String> getModelPackageImports() {
+        return modelPackageImports;
+    }
 
     private static <T> Map<String, T> combineMap(Map<String, T> thisMap, Map<String, T> otherMap) {
         if (thisMap != null && otherMap != null) {
@@ -155,6 +174,14 @@ public class MappingConfig implements GraphQLCodegenConfiguration, Combinable<Ma
         useObjectMapperForRequestSerialization = combineSet(useObjectMapperForRequestSerialization, source.useObjectMapperForRequestSerialization);
         generatedLanguage = getValueOrDefaultToThis(source, GraphQLCodegenConfiguration::getGeneratedLanguage);
         generateModelOpenClasses = getValueOrDefaultToThis(source, GraphQLCodegenConfiguration::isGenerateModelOpenClasses);
+
+
+        if (source.apiPackageImports != null) {
+            this.apiPackageImports.addAll(source.apiPackageImports);
+        }
+        if (source.modelPackageImports != null) {
+            this.modelPackageImports.addAll(source.modelPackageImports);
+        }
     }
 
     private <T> T getValueOrDefaultToThis(MappingConfig source, Function<MappingConfig, T> getValueFunction) {

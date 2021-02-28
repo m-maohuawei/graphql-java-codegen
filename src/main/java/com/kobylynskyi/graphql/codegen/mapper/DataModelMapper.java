@@ -230,6 +230,8 @@ public interface DataModelMapper {
         if (Utils.isNotBlank(genericPackageName) && !genericPackageName.equals(packageName)) {
             imports.add(genericPackageName);
         }
+        imports.addAll(mappingContext.getModelPackageImports());
+        imports.addAll(mappingContext.getApiPackageImports());
         // not adding apiPackageName because it should not be imported in any other generated classes
         return imports;
     }

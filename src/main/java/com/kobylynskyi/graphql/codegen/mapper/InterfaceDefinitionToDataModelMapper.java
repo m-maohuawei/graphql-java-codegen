@@ -39,6 +39,8 @@ public class InterfaceDefinitionToDataModelMapper {
     public Map<String, Object> map(MappingContext mappingContext, ExtendedInterfaceTypeDefinition definition) {
         Map<String, Object> dataModel = new HashMap<>();
         // type/enum/input/interface/union classes do not require any imports
+        Set<String> imports = DataModelMapper.getImports(mappingContext, DataModelMapper.getModelPackageName(mappingContext));
+        dataModel.put(IMPORTS, imports);
         dataModel.put(PACKAGE, DataModelMapper.getModelPackageName(mappingContext));
         dataModel.put(CLASS_NAME, dataModelMapper.getModelClassNameWithPrefixAndSuffix(mappingContext, definition));
         dataModel.put(JAVA_DOC, definition.getJavaDoc());

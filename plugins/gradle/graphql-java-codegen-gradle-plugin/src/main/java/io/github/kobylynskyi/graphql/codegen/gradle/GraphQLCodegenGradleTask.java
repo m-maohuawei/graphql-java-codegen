@@ -32,12 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Gradle task for GraphQL code generation
@@ -100,6 +95,9 @@ public class GraphQLCodegenGradleTask extends DefaultTask implements GraphQLCode
     private GeneratedLanguage generatedLanguage = MappingConfigConstants.DEFAULT_GENERATED_LANGUAGE;
     private Boolean generateModelOpenClasses = MappingConfigConstants.DEFAULT_GENERATE_MODEL_OPEN_CLASSES;
 
+    private List<String> apiPackageImports = new ArrayList<>();
+    private List<String> modelPackageImports = new ArrayList<>();
+
     public GraphQLCodegenGradleTask() {
         setGroup("codegen");
         setDescription("Generates Java POJOs and interfaces based on GraphQL schemas");
@@ -156,8 +154,12 @@ public class GraphQLCodegenGradleTask extends DefaultTask implements GraphQLCode
         mappingConfig.setMutationResolverParentInterface(getMutationResolverParentInterface());
         mappingConfig.setSubscriptionResolverParentInterface(getSubscriptionResolverParentInterface());
 
+
         mappingConfig.setGeneratedLanguage(generatedLanguage);
         mappingConfig.setGenerateModelOpenClasses(generateModelOpenClasses);
+
+        mappingConfig.setApiPackageImports(apiPackageImports);
+        mappingConfig.setModelPackageImports(modelPackageImports);
 
         instantiateCodegen(mappingConfig).generate();
     }
@@ -777,5 +779,26 @@ public class GraphQLCodegenGradleTask extends DefaultTask implements GraphQLCode
 
     public void setGenerateModelOpenClasses(Boolean generateModelOpenClasses) {
         this.generateModelOpenClasses = generateModelOpenClasses;
+    }
+
+
+    @Input
+    @Optional
+    public List<String> getApiPackageImports() {
+        return apiPackageImports;
+    }
+
+    public void setApiPackageImports(List<String> apiPackageImports) {
+        this.apiPackageImports = apiPackageImports;
+    }
+
+    @Input
+    @Optional
+    public List<String> getModelPackageImports() {
+        return modelPackageImports;
+    }
+
+    public void setModelPackageImports(List<String> modelPackageImports) {
+        this.modelPackageImports = modelPackageImports;
     }
 }

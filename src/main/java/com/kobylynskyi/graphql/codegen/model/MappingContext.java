@@ -45,6 +45,16 @@ public class MappingContext implements GraphQLCodegenConfiguration {
     }
 
     @Override
+    public List<String> getApiPackageImports() {
+        return config.getApiPackageImports();
+    }
+
+    @Override
+    public List<String> getModelPackageImports() {
+        return config.getModelPackageImports();
+    }
+
+    @Override
     public Map<String, String> getCustomTypesMapping() {
         return config.getCustomTypesMapping();
     }
@@ -263,6 +273,8 @@ public class MappingContext implements GraphQLCodegenConfiguration {
     public Integer getResponseProjectionMaxDepth() {
         return config.getResponseProjectionMaxDepth();
     }
+
+
 
     @Override
     public Set<String> getUseObjectMapperForRequestSerialization() {

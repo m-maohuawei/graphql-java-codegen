@@ -413,4 +413,9 @@ public interface GraphQLCodegenConfiguration {
      */
     Boolean isGenerateModelOpenClasses();
 
+
+    List<String> getApiPackageImports();
+
+    List<String> getModelPackageImports();
+
 }

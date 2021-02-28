@@ -5,6 +5,7 @@ import com.kobylynskyi.graphql.codegen.model.definitions.ExtendedInputObjectType
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static com.kobylynskyi.graphql.codegen.model.DataModelFields.*;
 
@@ -38,6 +39,8 @@ public class InputDefinitionToDataModelMapper {
         Map<String, Object> dataModel = new HashMap<>();
         // type/enum/input/interface/union classes do not require any imports
         dataModel.put(PACKAGE, DataModelMapper.getModelPackageName(mappingContext));
+        Set<String> imports = DataModelMapper.getImports(mappingContext, DataModelMapper.getModelPackageName(mappingContext));
+        dataModel.put(IMPORTS, imports);
         dataModel.put(CLASS_NAME, dataModelMapper.getModelClassNameWithPrefixAndSuffix(mappingContext, definition));
         dataModel.put(JAVA_DOC, definition.getJavaDoc());
         dataModel.put(NAME, definition.getName());

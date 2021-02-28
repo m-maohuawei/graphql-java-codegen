@@ -137,6 +137,7 @@ public class FieldDefinitionsToResolverDataModelMapper {
         Set<String> imports = DataModelMapper.getImports(mappingContext, packageName);
         List<OperationDefinition> operations = mapToOperations(mappingContext, fieldDefinitions, parentTypeName);
 
+
         Map<String, Object> dataModel = new HashMap<>();
         dataModel.put(PACKAGE, packageName);
         dataModel.put(IMPORTS, imports);

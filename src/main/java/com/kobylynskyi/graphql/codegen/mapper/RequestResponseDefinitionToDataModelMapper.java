@@ -18,24 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.ANNOTATIONS;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.BUILDER;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.CLASS_NAME;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.DEPRECATED;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.ENUM_IMPORT_IT_SELF_IN_SCALA;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.EQUALS_AND_HASH_CODE;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.FIELDS;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.GENERATED_INFO;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.GENERATED_ANNOTATION;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.JAVA_DOC;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.METHOD_NAME;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.OPERATION_NAME;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.OPERATION_TYPE;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.PACKAGE;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.RESPONSE_PROJECTION_MAX_DEPTH;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.RETURN_TYPE_NAME;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.TO_STRING;
-import static com.kobylynskyi.graphql.codegen.model.DataModelFields.TO_STRING_FOR_REQUEST;
+import static com.kobylynskyi.graphql.codegen.model.DataModelFields.*;
 
 /**
  * Map request and response definition to a Freemarker data model
@@ -129,6 +112,8 @@ public class RequestResponseDefinitionToDataModelMapper {
         String className = Utils.capitalize(definition.getName()) + mappingContext.getResponseProjectionSuffix();
         Map<String, Object> dataModel = new HashMap<>();
         // ResponseProjection classes are sharing the package with the model classes, so no imports are needed
+        Set<String> imports = DataModelMapper.getImports(mappingContext, DataModelMapper.getModelPackageName(mappingContext));
+        dataModel.put(IMPORTS, imports);
         dataModel.put(PACKAGE, DataModelMapper.getModelPackageName(mappingContext));
         dataModel.put(CLASS_NAME, className);
         dataModel.put(ANNOTATIONS, graphQLTypeMapper.getAnnotations(mappingContext, className));
